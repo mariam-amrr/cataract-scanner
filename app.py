@@ -54,6 +54,7 @@ def log_result(name, prediction, confidence):
     df = pd.concat([df, new_entry], ignore_index=True)
     df.to_csv(LOG_PATH, index=False)
 
+ADMIN_PASSWORD = "mimi8"  # Change this to a secure password
 
 # --- UI ---
 st.set_page_config(page_title="👁️ OcuScan", layout="wide")
@@ -144,27 +145,33 @@ if uploaded_file and user_name:
                 st.json({class_names[i]: float(ensemble_pred[0][i]) for i in range(len(class_names))})
 # --- Editable Log Viewer ---
 st.markdown("---")
-st.subheader("🗂️ View & Edit Log Records")
+st.subheader("🔐 Admin Access – View & Manage Logs")
 
-log_df = load_log()
+# Password input
+admin_input = st.text_input("Enter admin password to manage logs:", type="password")
 
-if not log_df.empty:
-    edited_df = st.data_editor(log_df, num_rows="dynamic", use_container_width=True, key="editor")
+if admin_input == ADMIN_PASSWORD:
+    st.success("Access granted.")
+    
+    log_df = load_log()
 
-    if st.button("💾 Save Changes to Log"):
-        edited_df.to_csv(LOG_PATH, index=False)
-        st.success("✅ Log updated successfully.")
+    if not log_df.empty:
+        edited_df = st.data_editor(log_df, num_rows="dynamic", use_container_width=True, key="editor")
+
+        if st.button("💾 Save Changes to Log"):
+            edited_df.to_csv(LOG_PATH, index=False)
+            st.success("✅ Log updated successfully.")
+    else:
+        st.info("📭 No log records available yet.")
+
+    # Optional: Add delete log button
+    if st.checkbox("⚠️ Confirm deletion of all logs"):
+        if st.button("❌ Delete All Log Records"):
+            os.remove(LOG_PATH)
+            st.success("🗑️ Log file deleted.")
 else:
-    st.info("📭 No log records available yet.")
-import shutil
+    if admin_input:
+        st.error("❌ Incorrect password.")
 
-st.markdown("### 🗑️ Manage Logs")
-
-if os.path.exists(LOG_PATH):
-    if st.button("❌ Delete All Log Records"):
-        os.remove(LOG_PATH)
-        st.success("Log file deleted successfully. Refresh the app to update view.")
-else:
-    st.info("No log file found to delete.")
 
 
